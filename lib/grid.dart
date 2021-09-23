@@ -1,12 +1,13 @@
 import 'dart:ui';
 
+import 'package:a_star/a_star.dart';
 import 'package:flutter/material.dart';
 
 class GridDrawer extends StatelessWidget {
   const GridDrawer(this.grid, this.width, {Key? key}) : super(key: key);
   final List<GridCell> grid;
   final int width;
-  int get height => grid.length ~/ width;
+  int get height => grid.isEmpty? 0 : grid.length ~/ width;
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
@@ -38,34 +39,43 @@ class GridPainter extends CustomPainter {
   }
 }
 
-abstract class GridCell {
-  List<Direction>? get directions => null;
+abstract class GridCell with Node<GridCell> {
+  GridCell(this.x, this.y);
 
+  List<Direction>? get directions => null;
+  final int x;
+  final int y;
   void paint(Canvas canvas, Size size, Offset offset);
 }
 
 class Empty extends GridCell {
+  Empty(int x, int y) : super(x, y);
+
   @override
   void paint(Canvas canvas, Size size, Offset offset) {}
+  @override
+  String toString() => "_($x, $y)";
 }
 
 class Road extends GridCell {
   @override
   final List<Direction> directions;
 
-  Road(this.directions);
+  Road(this.directions, int x, int y) : super(x, y);
   @override
   void paint(Canvas canvas, Size size, Offset offset) {
     canvas.drawRect(offset & size, Paint()..color = Colors.grey[800]!);
     canvas.drawVertices(Vertices(VertexMode.triangles, directions.expand((element) => element.toTriangle(offset, size)).toList()), BlendMode.dst, Paint()..color = Colors.grey);
   }
+  @override
+  String toString() => "ROAD($directions), $x, $y";
 }
 
 class CarRoad extends Road {
   final Direction carDir;
   final Color color;
 
-  CarRoad(List<Direction> directions, this.carDir, this.color): super(directions);
+  CarRoad(List<Direction> directions, this.carDir, this.color, int x, int y): super(directions, x, y);
   @override
   void paint(Canvas canvas, Size size, Offset offset) {
     super.paint(canvas, size, offset);
@@ -74,6 +84,8 @@ class CarRoad extends Road {
     }
     canvas.drawVertices(Vertices(VertexMode.triangles, carDir.toTriangle(size.center(offset) - size.bottomRight(Offset.zero)/4, size/2)), BlendMode.dst, Paint()..color = color);
   }
+  @override
+  String toString() => "CARROAD($directions $color), $x, $y";
 }
 
 class Direction {
@@ -85,6 +97,8 @@ class Direction {
     List<Offset> tri = asTriangle(offset, size);
     return tri;
   }
+  @override
+  String toString() => "($dx, $dy)";
   double size2 = 5;
   List<Offset> asTriangle(Offset offset, Size size) {
     switch(dx*2+dy) {
