@@ -36,18 +36,25 @@ class _MyHomePageState extends State<MyHomePage> implements Graph<GridCell> {
     Empty(0, 0),
   ];
   List<Destination> goals = [
-    Destination(3, 0, Colors.green),
-    Destination(3, 2, Colors.yellow),
+    Destination(0, 3, Colors.green),
+    Destination(1, 0, Colors.red),
+    Destination(3, 4, Colors.yellow),
+    Destination(4, 1, Colors.blue),
   ];
-  List<int> starts = [1];
-  List<Color> colors = [Colors.green, Colors.yellow];
+  List<List<int>> starts = [
+    [0, 1],
+    [3, 0],
+    [1, 4],
+    [4, 3]
+  ];
+  List<Color> colors = [Colors.green, Colors.yellow, Colors.blue, Colors.red];
   int width = 1;
   int tN = 0;
   void parse() async {
     int w = 0;
     int l = 0;
     grid = [];
-    List<int> starts2 = starts;
+    List<List<int>> starts2 = starts;
     starts = [];
     String str = await rootBundle.loadString("world.roads");
     cs:
@@ -72,6 +79,10 @@ class _MyHomePageState extends State<MyHomePage> implements Graph<GridCell> {
           break;
         case '|':
           grid.add(Road([Direction(0, 1), Direction(0, -1)], w, l));
+          break;
+        case '[':
+          grid.add(
+              Road([Direction(0, 1), Direction(0, -1), Direction(1, 0)], w, l));
           break;
         case '_':
           grid.add(Empty(w, l));
@@ -119,11 +130,13 @@ class _MyHomePageState extends State<MyHomePage> implements Graph<GridCell> {
               grid[y * width + x], grid[goal.y * width + goal.x]);
           Direction dir;
           if (steps.isEmpty) {
-            print("hmm... ${grid[y*width+x]} to ${goal.x} ${goal.y} failed.");
+            print(
+                "hmm... ${grid[y * width + x]} to ${goal.x} ${goal.y} failed.");
             dir = Direction(0, 0);
           } else {
             steps = steps.skip(1);
             dir = Direction(steps.first.x - x as int, steps.first.y - y as int);
+            if (steps.first is CarRoad) dir = Direction(0, 0);
           }
           nopes.add((y + dir.dy) * width + (x + dir.dx));
           grid[(y + dir.dy) * width + (x + dir.dx)] = CarRoad(
@@ -140,11 +153,15 @@ class _MyHomePageState extends State<MyHomePage> implements Graph<GridCell> {
     }
     setState(() {
       if (tN % 1 == 0) {
-        for (int start in starts) {
+        for (List<int> start in starts) {
           colors.shuffle();
-          if (grid[start * width] is! CarRoad) {
-            grid[start * width] = CarRoad(grid[start * width].directions!,
-                Direction(0, 0), colors.first, start, 0);
+          if (grid[start[1] * width + start[0]] is! CarRoad) {
+            grid[start[1] * width + start[0]] = CarRoad(
+                grid[start[1] * width + start[0]].directions!,
+                Direction(1, 0),
+                colors.first,
+                start[0],
+                start[1]);
           }
         }
       }
@@ -185,25 +202,25 @@ class _MyHomePageState extends State<MyHomePage> implements Graph<GridCell> {
     if (node.x > 0 &&
         node.directions!.any((x) => x.dx == -1) &&
         grid[(node.y * width + node.x) - 1] is Road) {
-          //("$node - 1");
+      //("$node - 1");
       yield grid[(node.y * width + node.x) - 1];
     }
     if (node.y > 0 &&
         node.directions!.any((x) => x.dy == -1) &&
         grid[(node.y * width + node.x) - width] is Road) {
-          //("$node - w");
+      //("$node - w");
       yield grid[(node.y * width + node.x) - width];
     }
     if (node.y < (grid.length ~/ width) - 1 &&
         node.directions!.any((x) => x.dy == 1) &&
         grid[(node.y * width + node.x) + width] is Road) {
-          //("$node + w");
+      //("$node + w");
       yield grid[(node.y * width + node.x) + width];
     }
     if (node.x < width - 1 &&
         node.directions!.any((x) => x.dx == 1) &&
         grid[(node.y * width + node.x) + 1] is Road) {
-          //("$node + 1");
+      //("$node + 1");
       yield grid[(node.y * width + node.x) + 1];
     }
   }
