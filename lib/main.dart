@@ -36,10 +36,10 @@ class _MyHomePageState extends State<MyHomePage> implements Graph<GridCell> {
     Empty(0, 0),
   ];
   List<Destination> goals = [
-    Destination(0, 3, Colors.green),
-    Destination(1, 0, Colors.red),
-    Destination(3, 4, Colors.yellow),
-    Destination(4, 1, Colors.blue),
+    Destination(0, 2, Colors.green),
+    Destination(0, 2, Colors.red),
+    Destination(0, 2, Colors.yellow),
+    Destination(4, 4, Colors.blue),
   ];
   List<List<int>> starts = [
     [0, 1],
@@ -153,17 +153,19 @@ class _MyHomePageState extends State<MyHomePage> implements Graph<GridCell> {
     }
     setState(() {
       if (tN % 1 == 0) {
-        for (List<int> start in starts) {
+        if (starts.isEmpty) return;
+        List<int> start = starts.first;
+        while (grid[start[1] * width + start[0]] is CarRoad) {
+          starts.shuffle();
+          start = starts.first;
           colors.shuffle();
-          if (grid[start[1] * width + start[0]] is! CarRoad) {
-            grid[start[1] * width + start[0]] = CarRoad(
-                grid[start[1] * width + start[0]].directions!,
-                Direction(1, 0),
-                colors.first,
-                start[0],
-                start[1]);
-          }
         }
+        grid[start[1] * width + start[0]] = CarRoad(
+            grid[start[1] * width + start[0]].directions!,
+            Direction(1, 0),
+            colors.first,
+            start[0],
+            start[1]);
       }
     });
   }
